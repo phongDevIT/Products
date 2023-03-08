@@ -21,28 +21,35 @@ exports.product_create = async function (req, res, next) {
     }
 };
 
-exports.product_details = function (req, res, next) {
-    Product.findById(req.params.id, function (err, product) {
-        if (err) return next(err);
-        res.send(product);
-    });
-};
-
-exports.product_update = function (req, res, next) {
-    Product.findByIdAndUpdate(
-        req.params.id,
-        { $set: req.body },
-        function (err, product) {
-            if (err) return next(err);
-            res.send("Product updated.");
+exports.product_details = async function (req, res, next) {
+    try {
+        const product = await Product.findById(req.params.id);
+        if (!product) {
+            return res.status(404).send("Product not found");
         }
-    );
+        res.send(product);
+    } catch (err) {
+        return next(err);
+    }
 };
 
-// Delete a product
-exports.product_delete = function (req, res, next) {
-    Product.findByIdAndRemove(req.params.id, function (err) {
-        if (err) return next(err);
+exports.product_update = async function (req, res) {
+    try {
+        const product = await Product.findByIdAndUpdate(req.params.id, {
+            $set: req.body,
+        });
+        res.send("Product updated successfully.");
+    } catch (err) {
+        res.status(500).send(err);
+    }
+};
+
+exports.product_delete = async function (req, res, next) {
+    try {
+        await Product.findOneAndDelete(req.params.id);
         res.send("Deleted successfully!");
-    });
+    } catch (err) {
+        console.error(err);
+        return next(err);
+    }
 };
